@@ -68,6 +68,37 @@ The following in an example dataset taken with the Auxiliary Telescope:
 One important aspect to keep in mind when obtaining data for a pointing model is the interplay between telescope position and optical collimation.
 If the telescope optics is not collimated when taking the data, or if collimation changed over time (due to mechanical reasons or else), one may need to recompute the pointing model either with new data or reformatting the data to be compatible.
 
+.. _Updates-with-Pointing-Component-v3:
+
+Updates with Pointing Component v3
+----------------------------------
+
+As with version 3 of the pointing component, the `pointing data`_ is now published to DDS (and, consequentially, stored into the EFD) when users issue the `pointAddData`_ command.
+This makes it much easier to mine the data from the EFD and process them to generate pointing data.
+
+.. _pointing data: https://ts-xml.lsst.io/sal_interfaces/ATPtg.html#pointdata
+
+This is especially useful when an acquisition image is taken when "tagging" a particular position.
+The process to gather the data then becomes:
+
+  - query the EFD for instances of the `pointing data`_ event,
+  - for each instance of the event, query;
+    - the closes image taken,
+    - the telescope position,
+    - the rotator position,
+    - (ATAOS) x and y offsets of the hexapod with respect to the look-up-tables,
+  - for each image, compute the image x and y offset of the brightest source with respect to the boresight,
+  - convert image x and y offset to telescope elevation and azimuth offsets,
+  - compute the telescope elevation and azimuth offsets due to offsets in the hexapod,
+  - Add the offsets to the "measured" axis in the pointing data,
+  - Save a corrected pointing file.
+
+This process is made available by two parameterized Jupyter notebooks in `ts_analysis_notebooks`_.
+The idea of using parameterized notebooks is that users can easily run both of them with `papermill`_, considerably improving reproducibility.
+
+.. _ts_analysis_notebooks: https://github.com/lsst-ts/ts_analysis_notebooks/tree/develop/notebooks/auxtel/atptg/pointing_model
+.. _papermill: https://papermill.readthedocs.io/en/latest/index.html
+
 .. _Building-an-initial-pointing-model:
 
 Building an initial pointing model
@@ -99,98 +130,20 @@ This work was initiated with the CMOS camera and later redone with LATISS.
 
 With the new camera installed and an initial version of pointing model and optics lookup table, we where able to sample more targets in the sky more efficiently.
 
-.. _Pointing-model-run-202003:
+.. _Observing-Runs:
 
-Pointing model run 2020/03
---------------------------
+Observing Runs
+==============
 
-This pointing model data was obtained with the following set of optics lookup tables;
+The following is a list of the different pointing models runs.
+Each run contains the description of the observations as well as the process to obtain a new pointing model.
 
-  - 2020/03/12: `M1 pressure lookup table`_.
-  - 2020/03/13: `Optics Hexapod lookup table`_.
+.. toctree::
+    runs/run-202106
+    runs/run-202003
+    runs/run-202002
+    :maxdepth: 1
 
-.. _M1 pressure lookup table: https://tstn-012.lsst.io
-.. _Optics Hexapod lookup table: https://tstn-013.lsst.io
-
-The dataset, taken on the night of 2020/03/14, is reproduced bellow:
-
-.. code-block:: text
-
-  LSST Auxiliary Telescope, 2020 Mar 15 UTC 2 27 13
-  : ALTAZ
-  : ROTNR
-  -30 14 40.2
-  154.5139233 46.1577658 154.4096955 46.2199866 314.4605341
-  357.5678314 17.9506751 357.4900009 18.0435750 288.4585002
-  357.1805839 31.6160368 357.1093148 31.6954934 301.9815193
-  358.2118688 56.8783782 358.1454349 56.9733136 327.0756924
-  347.5999780 70.6144443 347.5398578 70.7115838 341.0912845
-  323.8041930 79.9832723 323.7093333 80.0857805 351.8436522
-  018.8692942 84.9767233 018.8684492 85.0679421 356.7106661
-  047.6556515 70.3108171 047.6139243 70.3874748 339.8624050
-  047.3214290 58.0218443 047.2620570 58.0996033 327.5545904
-  043.0308213 45.3968715 042.9617598 45.4753609 314.9437026
-  039.2580973 22.1207582 039.1930307 22.1978042 291.6277522
-  087.7493259 18.6262800 087.6795663 18.6886360 287.7218599
-  088.7768166 33.2190339 088.7122462 33.2682459 302.3067621
-  094.1086071 45.7303005 094.0370805 45.7894927 314.7504970
-  092.2544485 61.5521446 092.1819055 61.6152214 330.3066134
-  107.6320101 76.7063788 107.5432790 76.7658342 345.5776401
-  153.9140911 81.8137095 153.6679213 81.8787540 350.3691146
-  144.5183097 72.1021036 144.3863160 72.1623975 341.3843738
-  142.2532274 55.5229833 142.1480415 55.5841901 324.6526726
-  137.5457038 30.5829845 137.4602677 30.6296798 299.5670612
-  133.9886635 17.1847063 133.9075305 17.2436887 286.3343927
-  132.7695614 19.6774738 132.6885209 19.7330891 288.9255259
-  211.3011076 81.3446205 210.9970243 81.4277598 351.9363841
-  195.4981131 70.9455152 195.3341187 71.0194850 341.0148891
-  193.2916824 56.8761051 193.1663346 56.9502421 326.9930977
-  185.8139290 44.5810159 185.7012314 44.6476518 314.5179672
-  176.8598491 17.2785396 176.7724100 17.3439524 286.7440828
-  227.9678119 30.2922359 227.8747886 30.3617034 300.8442111
-  229.6222199 41.0536491 229.5200929 41.1333113 311.6391435
-  233.2062101 53.4807098 233.0840475 53.5710452 324.1901714
-  232.5879344 68.1675325 232.4348991 68.2571052 338.8469271
-  237.0552385 81.5377692 236.7540306 81.6315329 352.5994603
-  224.8167489 17.9507370 224.7245002 18.0339147 288.4724257
-  267.8139227 27.3648641 267.7251956 27.4481086 299.1215216
-  269.7681627 38.4861510 269.6742923 38.5720102 310.7434790
-  271.5085630 53.0142770 271.4000372 53.1168265 323.8554050
-  274.2468497 64.2155849 274.1284872 64.3185550 335.3203697
-  266.0360257 76.5660337 265.8638645 76.6671042 348.9751496
-  329.6583907 82.3539537 329.5493134 82.4577645 356.0761032
-  319.2607020 67.4522271 319.1731715 67.5542916 338.2145520
-  316.6631312 56.6064178 316.5753298 56.7093257 327.2345760
-  313.9002173 42.8905503 313.8108478 42.9843875 313.7268993
-  313.1359793 31.2112474 313.0527900 31.2975443 301.9927343
-  319.2054673 17.4259367 319.1254117 17.5238048 287.9991321
-  END
-
-.. _Pointing-model-run-202002:
-
-Pointing model run 2021/02
---------------------------
-
-On the night of 2021/02/19 (`SUMMIT-4829`_) we took some additional data for the pointing model.
-
-During the same run we also took new data for the optical lookup table (both for M1 pressure and hexapod).
-After reducing the data and producing new lookup tables we realized that the newer data was not compatible  with previous data.
-Most importantly, we noticed that the collimation coefficients (especially hexapod y-axis correction) for the new table where considerably different at lower elevation.
-
-The new lookup table was loaded into the ATAOS component and used during the last night of the run.
-
-The idea was to combine the new pointing data with the :ref:`previous data <Pointing-model-run-202003>` to obtain an improved model.
-Unfortunately, with the updated lookup tables the data is no longer compatible, specially at lower elevation.
-
-Furthermore, the data taken this time is slightly different than the regular procedure.
-Instead of centering the start in the field of view, we decided to mark the position wherever the field landed after we performed wavefront sensing.
-We also added an acquisition image just before the positions was marked.
-
-Therefore, we have to add a post-processing step to the data, where we measure the offset required to center the target and update the pointing file by applying the offset.
-We developed a notebook to perform this task, which can be found in `ts_analysis_notebook`_.
-
-.. _SUMMIT-4829: https://jira.lsstcorp.org/browse/SUMMIT-4829
-.. _ts_analysis_notebook: https://github.com/lsst-ts/ts_analysis_notebooks
 
 .. _Fitting-Pointing-Model:
 

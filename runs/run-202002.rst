@@ -1,0 +1,25 @@
+.. _Pointing-model-run-202002:
+
+Pointing model run 2020/02
+==========================
+
+On the night of 2021/02/19 (`SUMMIT-4829`_) we took some additional data for the pointing model.
+
+During the same run we also took new data for the optical lookup table (both for M1 pressure and hexapod).
+After reducing the data and producing new lookup tables we realized that the newer data was not compatible  with previous data.
+Most importantly, we noticed that the collimation coefficients (especially hexapod y-axis correction) for the new table where considerably different at lower elevation.
+
+The new lookup table was loaded into the ATAOS component and used during the last night of the run.
+
+The idea was to combine the new pointing data with the :ref:`previous data <Pointing-model-run-202003>` to obtain an improved model.
+Unfortunately, with the updated lookup tables the data is no longer compatible, specially at lower elevation.
+
+Furthermore, the data taken this time is slightly different than the regular procedure.
+Instead of centering the start in the field of view, we decided to mark the position wherever the field landed after we performed wavefront sensing.
+We also added an acquisition image just before the positions was marked.
+
+Therefore, we have to add a post-processing step to the data, where we measure the offset required to center the target and update the pointing file by applying the offset.
+We developed a notebook to perform this task, which can be found in `ts_analysis_notebook`_.
+
+.. _SUMMIT-4829: https://jira.lsstcorp.org/browse/SUMMIT-4829
+.. _ts_analysis_notebook: https://github.com/lsst-ts/ts_analysis_notebooks
