@@ -1,0 +1,131 @@
+.. _Pointing-model-run-202111:
+
+##########################
+Pointing model run 2021/11
+##########################
+
+For this run we took data at higher elevation where the previous pointing model datasets were lacking.
+Alone, this dataset is not enough to constrain a good pointing model so the idea was to combine it with data taken on :ref:`Pointing-model-run-202109`.
+
+.. _Pointing-model-run-202111-Observations:
+
+Observations
+============
+
+The data for this run was taken following a similar procedure to that of :ref:`Pointing-model-run-202106-Observations`.
+
+A summary of the observations is shown in :ref:`table-observations-journal-202111`.
+
+.. _table-observations-journal-202111:
+
+.. table:: Observation journal
+
+  +------------+--------------------------+
+  | Night      |  Number of observations  |
+  +============+==========================+
+  | 2021/11/07 |           16             |
+  +------------+--------------------------+
+
+
+.. _pointing-model-run-202111-data-analysis:
+
+Data Analysis
+=============
+
+The data analysis follows a similar procedure to that of :ref:`Pointing-model-run-202106-Data-Analysis`.
+
+.. _pointing-model-run-202111-data-analysis-EFD-Data-Mining:
+
+EFD Data Mining
+---------------
+
+.. prompt:: bash
+
+    papermill -p year 2021 -p month 11 -p day 04 -p time_window 2 -p data_path /readonly/repo/main reducing_pointing_data.ipynb reducing_pointing_data/20211004_tw002.ipynb
+
+.. _pointing-model-run-202111-data-analysis-Generating-Pointing-File:
+
+Generating Pointing File
+------------------------
+
+.. prompt:: bash
+
+    papermill -p pointing_data_file data/20211104/AT_point_data_20211104_tw002.pickle build_pointing_data.ipynb build_pointing_data/20211104_tw002.ipynb
+
+.. _Pointing-model-run-202111-Data-Analysis-Generating-Pointing-Model:
+
+Generating Pointing Model
+-------------------------
+
+As mentioned before, this dataset consist mostly of observations taken at higher elevation to complement previous observations done with a lower maximum elevation limit. 
+
+In order the derive a pointing model we then combined these observations with those taken on :ref:`Pointing-model-run-202109`.
+These are the only dataset taken with the same set of LUTs for the hexapod and therefore, the only ones we can actually combine.
+
+Fitting a simple 7-parameter pointing model to the data yields;
+
+.. code-block:: text
+
+        coeff          value    sigma
+
+    1     IA         -290.76    2.414
+    2     IE         -246.83    2.276
+    3     CA          +86.71    1.520
+    4     AN          +39.35    0.555
+    5     AW          +68.34    0.548
+    6     TF          -98.54    9.053
+    7     TX10        +26.91    4.012
+
+    Sky RMS =   4.45
+    Popn SD =   4.65
+
+:numref:`fig-tpoint_a9plot_ia_ie_an_aw_tf_tx10_202111_tw004` below shows the diagnostics plots from this model.
+
+..  figure:: /_static/tpoint_a9plot_ia_ie_an_aw_tf_tx10_202111_tw004.png
+    :name: fig-tpoint_a9plot_ia_ie_an_aw_tf_tx10_202111_tw004
+    :target: ../_images/tpoint_a9plot_ia_ie_an_aw_tf_tx10_202111_tw004.png
+    :alt: pointing model fit
+
+    The "9 favorite plots for altazimuth".
+    This plot gathers the 9 most relevant plots with information about the pointing model fit for an altaz mount.
+
+As with the other cases we still obtained some small correlated errors on some of the diagnostics plots.
+A higher order pointing model is cabable or considerbaly reducing these errors and produces a small improvement on sky RMS.
+
+In this case, we obtain the following model:
+
+.. code-block: text
+
+        coeff          value    sigma
+
+    1     IA         -285.85    2.643
+    2     IE         -249.28    1.913
+    3   & HACA3        +2.52    0.859
+    4   & HACA8        -4.33    1.628
+    5   & HESA2        +1.91    0.530
+    6   & HESA3        -2.43    0.550
+    7   & HECA8        +7.04    1.511
+    8   & HECA8CE      -9.51    2.451
+    9   & HVCA8        +4.62    1.292
+    10     NPAE         +0.00
+    11     CA          +81.37    2.486
+    12   & HSCE3        -3.34    1.647
+    13     AN          +39.45    0.433
+    14     AW          +68.27    0.426
+    15     TF         -104.01    7.508
+    16     TX10        +28.07    3.276
+
+    Sky RMS =   3.52
+    Popn SD =   3.88
+
+And the diagnostics plots for this case is shown in :numref:`fig-tpoint_a9plot_fauto_202111_tw004`.
+
+..  figure:: /_static/tpoint_a9plot_fauto_202111_tw004.png
+    :name: fig-tpoint_a9plot_fauto_202111_tw004
+    :target: ../_images/tpoint_a9plot_fauto_202111_tw004.png
+    :alt: pointing model fit
+
+    The "9 favorite plots for altazimuth".
+    This plot gathers the 9 most relevant plots with information about the pointing model fit for an altaz mount.
+
+Nevertheless, we still advise on using the simpler model above as the higher order model will likely suffer from overfitting.

@@ -139,9 +139,14 @@ The following is a list of the different pointing models runs.
 Each run contains the description of the observations as well as the process to obtain a new pointing model.
 
 .. toctree::
-    runs/run-202106
-    runs/run-202003
     runs/run-202002
+    runs/run-202003
+    runs/run-202106
+    runs/run-202107
+    runs/run-202108
+    runs/run-202109
+    runs/run-202110
+    runs/run-202111
     :maxdepth: 1
 
 

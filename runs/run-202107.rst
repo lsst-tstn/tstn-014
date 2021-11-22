@@ -1,0 +1,93 @@
+.. _Pointing-model-run-202107:
+
+##########################
+Pointing model run 2021/07
+##########################
+
+This run was an initial follow-up on the discoveries we made while analyzing the data from :ref:`Pointing-model-run-202106`.
+
+We initially suspected that the strange pointing model residuals could mainly be a result of M2 motion.
+While inspecting the spider we noticed that some of them where indeed quite loose, which strentened our suspicions.
+
+In the afternoon before the second night of the run, the M2 spider arms where tightened before the night started.
+We then obtained data to build a new pointing model, as well as to build hexapod lookup tables.
+
+During this run we also had installed position measurement devices in the back of M1 so we could differentiate between M2 and M1 motion.
+For more information see `sitcomtn-015`_.
+
+.. _sitcomtn-015: https://sitcomtn-015.lsst.io
+
+
+.. _Pointing-model-run-202107-Observations:
+
+Observations
+============
+
+The data for this run was taken following a similar procedure to that of :ref:`Pointing-model-run-202106-Observations`.
+
+.. _Pointing-model-run-202107-Data-Analysis:
+
+Data Analysis
+=============
+
+The data analysis follows a similar procedure to that of :ref:`Pointing-model-run-202106-Data-Analysis`.
+
+.. _Pointing-model-run-202107-Data-Analysis-EFD-Data-Mining:
+
+EFD Data Mining
+---------------
+
+.. prompt:: bash
+
+    papermill -p year 2021 -p month 07 -p day 06 -p time_window 4 -p data_path /lsstdata/offline/instrument/LATISS/gen2repo reducing_pointing_data.ipynb reducing_pointing_data_20210706_tw004.ipynb
+
+
+.. _Pointing-model-run-202107-Data-Analysis-Generating-Pointing-File:
+
+Generating Pointing File
+------------------------
+
+.. prompt:: bash
+
+    papermill -p pointing_data_file data/20210706/AT_point_data_20210706_tw004.pickle build_pointing_data.ipynb build_pointing_data_20210706_tw004.ipynb
+
+.. _Pointing-model-run-202107-Data-Analysis-Generating-Pointing-Model:
+
+Generating Pointing Model
+-------------------------
+
+..  figure:: /_static/tpoint_a9plot_ia_ie_an_aw_tf_tx10_20210707_tw004.png
+    :name: fig-tpoint_a9plot_ia_ie_an_aw_tf_tx10_20210707_tw004
+    :target: ../_images/tpoint_a9plot_ia_ie_an_aw_tf_tx10_20210707_tw004.png
+    :alt: pointing model fit
+
+    The "9 favorite plots for altazimuth".
+    This plot gathers the 9 most relevant plots with information about the pointing model fit for an altaz mount.
+
+The following is the model fitted above:
+
+.. code-block:: text
+
+        coeff       change     value    sigma
+
+    1     IA         +0.001   -172.38    8.281
+    2     IE         -0.216   -217.46   31.147
+    3     AN         +0.063    +36.94    6.539
+    4     AW         +0.068    +74.06    6.568
+    5     TF         -1.259   +202.71  108.183
+    6     TX10       +0.731   -192.53   46.013
+
+    Sky RMS =  34.62
+    Popn SD =  37.82
+
+.. _Pointing-model-run-202107-Conclusions:
+
+Conclusions
+===========
+
+As can be seen in :numref:`fig-tpoint_a9plot_ia_ie_an_aw_tf_tx10_20210707_tw004` we still experience the same pointing behavior as in :ref:`Pointing-model-run-202106`, after tightening the M2 spider.
+
+During the run we used the M1 position measured and could verify that for lower elevation the mirror was being lifted out of the hard points.
+We also observed considerable histerysis in the mirror position, which both explains the non-repeatability of the pointing and the sharp change in pointing for lower elevations.
+
+For the following observing runs we focused in re-constructing the M1 pressure lookup table and obtaining a new dataset for the pointing model.
