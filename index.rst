@@ -17,7 +17,7 @@ Each new pointing model run is described in a dedicated session.
 
 The pointing model is part of the pointing component (`ATPtg`_ and `MTPtg`_).
 Although they are separate components, the code base is the same for both telescopes.
-That means that all the pointing kernel functionality is exact the same on both cases, the main differences are in the SAL layer of the components.
+That means that all the pointing kernel functionality is exactly the same on both cases, the main differences are in the SAL layer of the components.
 For more information see the `pointing component documentation`_.
 
 .. _ATPtg: https://ts-xml.lsst.io/sal_interfaces/ATPtg.html
@@ -83,7 +83,7 @@ The process to gather the data then becomes:
 
   - query the EFD for instances of the `pointing data`_ event,
   - for each instance of the event, query;
-    - the closes image taken,
+    - the closest image taken,
     - the telescope position,
     - the rotator position,
     - (ATAOS) x and y offsets of the hexapod with respect to the look-up-tables,
@@ -124,11 +124,11 @@ To solve this circular dependency between pointing model and optics lookup table
 
 Once an initial pointing model was computed using the CMOS camera, effort was dedicated into obtaining a more active control of the optical alignment.
 
-With the initial pointing model we where able to point and track targets more reliably over a good portion of the sky, even with the small field of view of the available camera, which allowed us to build better lookup tables for the optics.
+With the initial pointing model we were able to point and track targets more reliably over a good portion of the sky, even with the small field of view of the available camera, which allowed us to build better lookup tables for the optics.
 
 This work was initiated with the CMOS camera and later redone with LATISS.
 
-With the new camera installed and an initial version of pointing model and optics lookup table, we where able to sample more targets in the sky more efficiently.
+With the new camera installed and an initial version of pointing model and optics lookup table, we were able to sample more targets in the sky more efficiently.
 
 .. _Observing-Runs:
 
@@ -168,7 +168,7 @@ To facilitate use of the software we provide it as a docker image, that can be d
 Because `tpoint`_ generates some plots during steps of the fits, the container must be run with some special options to allow the displaying of those graphs.
 
 On a Mac, make sure you have `XQuartz`_ installed, and that the ``Security`` option ``Allow connections from network clients``, in ``Preferences`` is enabled.
-If the option is originally disabled, you will have to enabled it and restart `XQuartz`_ for it to take effect.
+If the option is originally disabled, you will have to enable it and restart `XQuartz`_ for it to take effect.
 
 .. _XQuartz: https://www.xquartz.org
 
