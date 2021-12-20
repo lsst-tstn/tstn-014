@@ -1,0 +1,208 @@
+.. _Pointing-model-run-202106:
+
+##########################
+Pointing model run 2021/06
+##########################
+
+This is the first pointing model run where version 3 of the pointing component was used.
+The procedure to process the data is slightly different than that of the previous runs, relying a lot more in mining the data from the EFD than the previous ones.
+Also, for the first time, we are also processing the data to account for small offsets in the field position when the pointing data is registered and any offset to the optics axis.
+Furthermore, because of these post-processing steps, we were able to obtain a lot more data than in the previous runs.
+
+.. _Pointing-model-run-202106-Observations:
+
+Observations
+============
+
+The data was taken as part of the engineering campaign `SUMMIT-5027`_ in June 8-11 2021.
+It consists mostly of pointing-dedicated data that consists of;
+
+.. _SUMMIT-5027: https://jira.lsstcorp.org/browse/SUMMIT-5027
+
+  #.  Define an Azimuth/Elevation position grid.
+  #.  Select a start with magnitude lower than 9 in the V band within 2 degrees of each position in the grid.
+      If a start cannot be found, skip to the next position in the grid.
+  #.  Slew to the selected target.
+  #.  Take a 5 seconds image.
+  #.  ``QuickFrameMeasurementTask`` to find the brightest start in the field-of-view.
+  #.  Offset the telescope such that the brightest start in the field-of-view is close to the boresight.
+  #.  Take a 5 seconds image.
+  #.  Register the position by sending a ``pointAddData`` command to the pointing component.
+  #.  Go to the next position in the grid.
+
+A summary of the observations, with the number of data points taken each night is shown in :ref:`table-observations-journal-202106`.
+
+.. _table-observations-journal-202106:
+
+.. table:: Observation journal
+
+  +------------+---------------------------+
+  | Night      |   Number of observations  |
+  +============+===========================+
+  | 2021/06/08 |            52             |
+  +------------+---------------------------+
+  | 2021/06/09 |            69             |
+  +------------+---------------------------+
+  | 2021/06/10 |            38             |
+  +------------+---------------------------+
+  | Total      |           160             |
+  +------------+---------------------------+
+
+The figure bellow shows the position of the observed targets in a Az/El polar plot for each individual night.
+
+.. _Pointing-model-run-202106-Data-Analysis:
+
+Data Analysis
+=============
+
+The data analysis consists of the following steps;
+
+  #.  Mine the EFD for the associated data and measure the required properties.
+  #.  Build pointing file.
+  #.  Analyze the pointing file with `tpoint`_ to obtain a pointing model (see details in :ref:`Fitting-Pointing-Model`).
+
+.. _tpoint: http://www.tpointsw.uk
+
+
+.. _Pointing-model-run-202106-Data-Analysis-EFD-Data-Mining:
+
+EFD Data Mining
+---------------
+
+The procedure is performed by a parameterized Jupyter notebook `reducing_pointing_data`_ in `ts_analysis_notebooks`_.
+
+.. _reducing_pointing_data: https://github.com/lsst-ts/ts_analysis_notebooks/blob/develop/notebooks/auxtel/atptg/pointing_model/reducing_pointing_data.ipynb
+.. _ts_analysis_notebooks: https://github.com/lsst-ts/ts_analysis_notebooks
+
+The notebook was processed at NTS with the following command;
+
+.. prompt:: bash
+
+  papermill -p year 2021 -p month 06 -p day 08 -p time_window 4 reducing_pointing_data.ipynb reducing_pointing_data_2021_06_08_tw4.ipynb
+
+The executed notebook is saved as ``reducing_pointing_data_2021_06_08_tw4.ipynb`` and can be opened and inspected afterwards.
+
+The basic tasks performed by this notebook are;
+
+  - Query the EFD for all instances of ``ATPtg.logevent_pointData`` and ``ATAOS.logevent_correctionOffsets`` events between ``2021-06-12T00:00:00.000`` and ``2021-06-15T00:00:00.000``.
+  - For each instance of ``ATPtg.logevent_pointData`` query the EFD for;
+
+    - ``ATCamera.logevent_endReadout`` instances up to 40 seconds before the event, and select the most recent image,
+    - ``ATMCS.mount_Nasmyth_Encoders`` values in a 3 seconds time window around the time of the event,
+    - ``ATMCS.mount_AzEl_Encoders`` values in a 3 seconds time window around the time of the event,
+    - ``ATHexapod.positionStatus`` values in a 3 seconds time window around the time of the event.
+
+  - Match each instance of ``ATPtg.logevent_pointData`` with the closest previous instance of ``ATAOS.logevent_correctionOffsets``.
+  - For each image (e.g., instance in ``ATCamera.logevent_endReadout``), run ``QuickFrameMeasurementTask`` to measure the position of the brightest source in the field.
+    This process is computational intensive and can take a while to complete.
+
+The ``QuickFrameMeasurementTask`` generates a data structure with information about the brightest source in the image.
+This includes the position of the source in image space alongside other photometric information.
+These data structures are stored in a list which, afterwards, is augmented with the information queried from the EFD.
+This list is than stored to disk in ``pickle`` format, to allow users to inspect and further analyze the data afterwards.
+The name of the output file is automatically formatted from the input parameters.
+Basically it consists of;
+
+.. code:: python
+
+  f"data/{year}{month:02d}{day:02d}/AT_point_data_{year}{month:02d}{day:02d}_tw{time_window:03d}.pickle"
+
+The data is stored relative to the location where the process runs.
+If the directory does not exists, it will be created automatically.
+The notebook will also overwrite existing files with the same name.
+
+.. _Pointing-model-run-202106-Data-Analysis-Generating-Pointing-File:
+
+Generating Pointing File
+------------------------
+
+A second Jupyter notebook, ``build_pointing_data``, is then used to load the data produced by ``reducing_pointing_data`` and generate the pointing file.
+This notebook is also parameterized, and receives the name of the file to load and analyze.
+
+Furthermore, this notebook has the capability of masking data based on the roundness of the brightest source.
+This is useful to mask the data points where there may be telescope motion/jitter, due to wind, poor tracking or else.
+
+In this case we execute;
+
+.. prompt:: bash
+
+  papermill -p pointing_data_file data/20210608/AT_point_data_20210608_tw004.pickle build_pointing_data.ipynb build_pointing_data_20210608_tw004.ipynb
+
+.. This will cause the notebook to mask any data with roundness above ``1.25``.
+.. Note that the data is still written to the output file, but the line is preceded with ";", which causes `tpoint`_ to skip it.
+.. In this case a total of 30 data points were masked.
+
+As with the previous case, the executed notebook is saved as ``build_pointing_data_20210608_tw004.ipynb`` and can be inspected afterwards.
+This notebook generates and saves two pointing files; ``AT_point_data_20210608_tw004.dat`` and ``AT_point_data_20210608_tw004_corr.dat``, containing the raw and processed pointing data, respectively.
+
+.. _Pointing-model-run-202106-Data-Analysis-Generating-Pointing-Model:
+
+Generating Pointing Model
+-------------------------
+
+The pointing model is generated using `tpoint`_ following the procedures described in :ref:`Fitting-Pointing-Model`.
+
+After generating the pointing files, as shown :ref:`above <Pointing-model-run-202106-Data-Analysis-EFD-Data-Mining>`, the data files are committed to the `ts_analysis_notebooks`_ repository and pulled locally, where they can be analyzed with `tpoint`_
+
+.. _Pointing-model-run-202106-Data-Analysis-Raw-Data:
+
+Raw Data
+^^^^^^^^
+
+.. figure:: /_static/tpoint_a9plot_ia_ie_an_aw_tf_tx10_20210608_tw004.png
+   :name: fig-tpoint_a9plot_ia_ie_an_aw_tf_tx10_20210608_tw004
+   :target: ../_images/tpoint_a9plot_ia_ie_an_aw_tf_tx10_20210608_tw004.png
+   :alt: pointing model fit
+
+   The "9 favorite plots for altazimuth".
+   This plot gathers the 9 most relevant plots with information about the pointing model fit for an altaz mount.
+   **Top-left-hand:** The east-west residuals plotted against hour angle.
+   **Top-center:** The declination residuals plotted against declination.
+   **Top-right-hand:** Zenith-distance errors against zenith distance.
+   **Center-left-hand:** The east-west residuals plotted against zenith distance.
+   **Center:** The declination residuals plotted against hour angle.
+   **Center-right-hand:** The residuals are interpreted as changes in the h/δ non-perpendicularity and plotted against hour angle.
+
+The following is the model fitted above:
+
+.. code-block:: text
+
+         coeff       change     value    sigma
+
+    1     IA         -0.000   -322.80    9.296
+    2     IE         -0.000   -358.49   19.646
+    3     AN         +0.000    +44.23    6.947
+    4     AW         +0.000    +66.48    6.914
+    5     TF         -0.000   -150.04   57.016
+    6     TX10       +0.000     -1.11   18.459
+
+  Sky RMS =  77.33
+  Popn SD =  78.82
+
+.. _Pointing-model-run-202106-Conclusions:
+
+Conclusions
+===========
+
+While analyzing this dataset, in combination with other datasets, we realized that there must be something wrong with the poiting stability.
+First we noticed that data taken at different epochs seemed not to be consistent at the level we expected.
+
+Furthermore, the residuals of the pointing fit using a simple pointing model, displays some odd corretaled behavior.
+See, for instance, the middle pannel of :numref:`fig-tpoint_a9plot_ia_ie_an_aw_tf_tx10_20210608_tw004`.
+This plot shows the residuals in zenith-angle (``dZ``) vs. zenith-angle (``Z``).
+Note how the shap changes in for zenith-angles around ~40 degrees.
+Also note that for higher zenith-angles there are two (or even potentially 3) non-consistent datasets, with three different branches having distinct ``dZ`` residual levels.
+
+These issues prompted use to look more closely at potential mechanical problems with the system.
+
+Our initial assumption was that M2 might be moving due to poor tightening of the spider.
+This was followed up by re-tightening of the structure, which ended up causing offsets in the pointing model (due to M2 position changing during the procedure) and potentially changes in the overall mechanical behavior, thus impacting the pointing model in different ways.
+
+The second assumption was that M1 could be floating in the cell, due to the pressure lookup table having too high values for lower elevations.
+This was followed up by installing position measurements devices in the back of M1 and doing a thorough analysis of mirror position at different elevations. 
+Ultimately, we constructed a new set of M1 pressure lookup tables, which also impacted the pointing in a number of different ways.
+
+Both these assumptions were explored in future runs.
+For more details, see also `sitcomtn-015`_.
+
+.. _sitcomtn-015: https://sitcomtn-015.lsst.io
