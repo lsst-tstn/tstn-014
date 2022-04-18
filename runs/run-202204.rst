@@ -1,0 +1,137 @@
+
+.. _pointing-model-run-202204:
+
+##########################
+Pointing model run 2022/04
+##########################
+
+This new pointing model dataset was taken to replace the `previous pointing model <Pointing-model-run-202111>` using a new ATAOS look-up-table for the ATHexapod and ATPneumatics.
+
+.. _pointing-model-run-202204-Observations:
+
+Observations
+============
+
+The data for this run was taken following a similar procedure to that of :ref:`Pointing-model-run-202106-Observations`.
+
+A summary of the observations is shown in :ref:`table-observations-journal-202111`.
+
+.. _table-observations-journal-202111:
+
+.. table:: Observation journal
+
+  +------------+--------------------------+
+  | Night      |  Number of observations  |
+  +============+==========================+
+  | 2022/04/07 |           53             |
+  +------------+--------------------------+
+
+
+.. _pointing-model-run-202204-data-analysis:
+
+Data Analysis
+=============
+
+The data analysis follows a similar procedure to that of :ref:`Pointing-model-run-202106-Data-Analysis`.
+
+.. _pointing-model-run-202204-data-analysis-EFD-Data-Mining:
+
+EFD Data Mining
+---------------
+
+.. prompt:: bash
+
+    papermill -p year 2022 -p month 04 -p day 06 -p time_window 4 -p efd_name summit_efd -p data_path /repo/LATISS reducing_pointing_data.ipynb reducing_pointing_data_2022_04_06_tw04.ipynb
+
+.. _pointing-model-run-202204-data-analysis-Generating-Pointing-File:
+
+Generating Pointing File
+------------------------
+
+.. prompt:: bash
+
+    papermill -p pointing_data_file data/20220406/AT_point_data_20220406_tw004.pickle build_pointing_data.ipynb build_pointing_data_2022_04_06_tw04.ipynb
+
+.. _pointing-model-run-202204-Data-Analysis-Generating-Pointing-Model:
+
+Generating Pointing Model
+-------------------------
+
+Fitting a simple 6-parameter pointing model to the data yields;
+
+.. code-block:: text
+
+        coeff       change     value    sigma
+
+    1     IA         -6.821   -292.01    2.167
+    2     IE         +0.001   -213.05    0.909
+    3     AN         -0.005    +39.16    0.504
+    4     AW         +0.005    +70.89    0.498
+    5     TX10       +0.000     -6.86    0.723
+    6     CA        +10.214    +90.93    1.519
+
+    Sky RMS =   3.14
+    Popn SD =   3.33
+
+:numref:`fig-tpoint_a9plot_ia_ie_an_aw_tf_tx10_202204_tw004` below shows the diagnostics plots from this model.
+
+..  figure:: /_static/tpoint_a9plot_ia_ie_an_aw_tf_tx10_202204_tw004.png
+    :name: fig-tpoint_a9plot_ia_ie_an_aw_tf_tx10_202204_tw004
+    :target: ../_images/tpoint_a9plot_ia_ie_an_aw_tf_tx10_202204_tw004.png
+    :alt: pointing model fit
+
+    The "9 favorite plots for altazimuth".
+    This plot gathers the 9 most relevant plots with information about the pointing model fit for an altaz mount.
+
+Note that with respect to the `previous pointing model <Pointing-model-run-202111>`, we reduce the model to 6 parameters, instead of 7, and we still obtain better residues (3.14 arcsec rms instead of 4.45).
+In the fitting process we usually start from the most simple coeffient, adding more complex one at each stage.
+If the parameter value is smaller than the ``sigma`` value, we remove the coeffient from the fit.
+In this case, the set of parameters that yield a good fit while still employing the most simple pointing coefficients is the one shown above.
+
+Nevertheless, would also expect that we would end up with residues that does not show any correlated errors.
+If you look at the top panels on :numref:`fig-tpoint_a9plot_ia_ie_an_aw_tf_tx10_202204_tw004`, you will notice that this is actually not the case and we still observe some correlated errors.
+The top pannels refered above show the east-west residuals plotted against hour angle, the declination residuals plotted against declination and the Zenith-distance errors against zenith distance, from left-hand to right-hand respectively.
+The correlated erros are more clear on the leftmost and rightmost plots.
+
+Since we were unable to remove these erros with a simple fit, we applied the automic fitting tool provided by tpoint.
+The result is;
+
+.. code-block: text
+
+        coeff          value    sigma
+
+    1     IA         -0.001   -291.26    0.970
+    2     IE                    +0.00
+    3   & HASA2      -0.000     -1.16    0.372
+    4   & HACA3      -0.003     +2.95    0.396
+    5   & HESA2      -0.003     +1.31    0.248
+    6   & HECA2      +0.003     +0.77    0.267
+    7   & HESA3      -0.001     -2.07    0.247
+    8   & HECA4      -0.002     -1.23    0.296
+    9   & HESE       -0.005   -208.32    1.559
+    10   & HECE3      -0.005    -21.26    1.774
+    11     NPAE                  +0.00
+    12     CA         +0.000    +90.16    0.700
+    13   & HSSE5      +0.001     -0.90    0.314
+    14     AN         +0.000    +39.20    0.213
+    15     AW         +0.001    +71.06    0.212
+    16     TF         +0.006    +86.88    3.284
+    17     TX10       -0.004    +11.92    1.778
+
+    Sky RMS =   1.30
+    Popn SD =   1.54
+
+And the diagnostics plots for this case is shown in :numref:`fig-tpoint_a9plot_fauto_202204_tw004`.
+
+..  figure:: /_static/tpoint_a9plot_fauto_202204_tw004.png
+    :name: fig-tpoint_a9plot_fauto_202204_tw004
+    :target: ../_images/tpoint_a9plot_fauto_202204_tw004.png
+    :alt: pointing model fit
+
+    The "9 favorite plots for altazimuth".
+    This plot gathers the 9 most relevant plots with information about the pointing model fit for an altaz mount.
+
+In this case, we observe a considerable improve in the fit residue (from 3.14 to 1.3 arcsec rms), though the number of coefficients jumps from 6 to 17 with the addition of several higher order coefficients.
+
+We will have to explore how these two models perform on sky in order to decide which one is more suitable.
+We tend to preferr simpler models as they give better performance is regions not covered by pointing data, whereas higher order models can produce some undesirable extrapolation effects.
